@@ -1,91 +1,109 @@
-# Creates an interactive dashboard using Dash
-from dash import Dash, dcc, html
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
 import pandas as pd
-
-
-class DashboardDataProvider:
-    """
-    Provides data required for the dashboard.
-    """
-    def __init__(self, index_data: pd.DataFrame, composition_changes: dict):
-        """
-        Initializes the data provider with index performance and composition changes.
-
-        Args:
-            index_data: A DataFrame containing index performance data with columns ['date', 'index_value'].
-            composition_changes: A dictionary of composition changes, where keys are dates and values are lists of changes.
-        """
-        self.index_data = index_data
-        self.composition_changes = composition_changes
-
-    def get_index_performance(self) -> pd.DataFrame:
-        """
-        Returns the index performance data.
-        """
-        return self.index_data
-
-    def get_composition_changes(self) -> dict:
-        """
-        Returns the composition changes data.
-        """
-        return self.composition_changes
-
+from database_manager import DatabaseManager
+from index_calculator import IndexCalculator
 
 class Dashboard:
-    """
-    Creates and manages an interactive dashboard.
-    """
-    def __init__(self, data_provider: DashboardDataProvider):
+    """Creates a dashboard using Matplotlib for visualizing index performance."""
+    def __init__(self, db_manager: DatabaseManager, index_calculator: IndexCalculator):
+        self.db_manager = db_manager
+        self.index_calculator = index_calculator
+
+    def plot_index_performance(self, start_date: str, end_date: str):
+        """Plots the index performance over a given date range."""
+        query = """
+        SELECT DISTINCT date FROM stock_data 
+        WHERE date BETWEEN ? AND ?
+        ORDER BY date
         """
-        Initializes the Dashboard with a data provider.
+        dates = self.db_manager.query(query, (start_date, end_date))
+        print("the date wise data is here")
+        print(dates)
+        dates = [row[0] for row in dates]
 
-        Args:
-            data_provider: An instance of DashboardDataProvider to fetch data for the dashboard.
+        index_values = [self.index_calculator.calculate_index(date) for date in dates]
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(dates, index_values, marker='o', linestyle='-', color='b', label='Index Value')
+        plt.title('Index Performance')
+        plt.xlabel('Date')
+        plt.ylabel('Index Value')
+        plt.xticks(rotation=45)
+        plt.legend()
+        plt.tight_layout()
+        plt.grid()
+        plt.show()
+
+    def plot_composition_changes(self, date: str):
+        """Plots the composition of the index for a given date."""
+        query = """
+        SELECT symbol, market_cap 
+        FROM stock_data 
+        WHERE date = ?
+        ORDER BY market_cap DESC 
+        LIMIT 100
         """
-        self.data_provider = data_provider
-        self.app = Dash(__name__)
+        data = self.db_manager.query(query, (date,))
+        print("printing stock_data")
+        print(data)
+        if not data:
+            print("No data available for the selected date.")
+            return
 
-    def _create_layout(self):
+        symbols, market_caps = zip(*data)
+
+        plt.figure(figsize=(12, 8))
+        plt.bar(symbols[:20], market_caps[:20], color='orange')  # Show top 20 for readability
+        plt.title(f'Top 20 Stocks by Market Cap on {date}')
+        plt.xlabel('Stock Symbol')
+        plt.ylabel('Market Cap (in billions)')
+        plt.xticks(rotation=90)
+        plt.tight_layout()
+        plt.grid(axis='y')
+        plt.show()
+
+    def show_summary_metrics(self, start_date: str, end_date: str):
+        """Displays summary metrics such as cumulative return and composition changes."""
+        query = """
+        SELECT DISTINCT date FROM stock_data 
+        WHERE date BETWEEN ? AND ?
+        ORDER BY date
         """
-        Creates the layout of the dashboard.
-        """
-        index_data = self.data_provider.get_index_performance()
+        # query = """SELECT * FROM stock_data"""
+        dates = self.db_manager.query(query, (start_date, end_date))
+        dates = [row[0] for row in dates]
 
-        # Line chart for index performance
-        index_performance_chart = go.Scatter(
-            x=index_data['date'],
-            y=index_data['index_value'],
-            mode='lines',
-            name='Index Performance'
-        )
+        index_values = [self.index_calculator.calculate_index(date) for date in dates]
+        if not index_values:
+            print("No data available for the selected period.")
+            return
 
-        # Composition changes as a list
-        composition_changes = self.data_provider.get_composition_changes()
+        # Calculate cumulative return and daily changes
+        cumulative_return = (index_values[-1] - index_values[0]) / index_values[0] * 100
+        daily_changes = [(index_values[i] - index_values[i - 1]) / index_values[i - 1] * 100 
+                         for i in range(1, len(index_values))]
 
-        self.app.layout = html.Div([
-            html.H1("Custom Index Dashboard", style={"textAlign": "center"}),
+        print(f"Summary Metrics from {start_date} to {end_date}:")
+        print(f"  Cumulative Return: {cumulative_return:.2f}%")
+        print(f"  Average Daily Change: {pd.Series(daily_changes).mean():.2f}%")
 
-            dcc.Graph(
-                id="index-performance-chart",
-                figure={
-                    "data": [index_performance_chart],
-                    "layout": {"title": "Index Performance Over Time"}
-                }
-            ),
+    def launch_dashboard(self, start_date: str, end_date: str, selected_date: str):
+        """Main function to launch the dashboard."""
+        print("1. Plot Index Performance")
+        print("2. Plot Index Composition for a Date")
+        print("3. Show Summary Metrics")
+        print("4. Exit")
 
-            html.Div([
-                html.H2("Composition Changes"),
-                html.Ul([
-                    html.Li(f"{date}: {', '.join(f'{change['action']} {change['ticker']}' for change in changes)}")
-                    for date, changes in composition_changes.items()
-                ])
-            ], style={"marginTop": "20px"})
-        ])
-
-    def run(self):
-        """
-        Runs the dashboard application.
-        """
-        self._create_layout()
-        self.app.run_server(debug=True)
+        while True:
+            choice = input("Select an option (1-4): ")
+            if choice == "1":
+                self.plot_index_performance(start_date, end_date)
+            elif choice == "2":
+                self.plot_composition_changes(selected_date)
+            elif choice == "3":
+                self.show_summary_metrics(start_date, end_date)
+            elif choice == "4":
+                print("Exiting Dashboard.")
+                break
+            else:
+                print("Invalid choice. Please select a valid option.")
