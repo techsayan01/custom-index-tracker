@@ -1,6 +1,4 @@
 
----
-
 # Custom Equal-Weighted Stock Index Tracker
 
 Construct and track an equal-weighted custom index comprising top 100 US stocks based on their market cap - Altemetrik
@@ -8,23 +6,32 @@ Construct and track an equal-weighted custom index comprising top 100 US stocks 
 
 To create a virtual environment, go to your project’s directory and run the following command. This will create a new virtual environment in a local folder named .venv:
 
+```bash
 python3 -m venv .venv
+```
 
 Activate a virtual environment
 
+```bash
 source .venv/bin/activate
+```
 
 To confirm the virtual environment is activated, check the location of your Python interpreter:
 
+```bash
 which python
+```
 
 To deactivate a virtual environment
 
+```bash
 deactivate
+```
 
+```
 See more here: https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/
-
-Below is an exhaustive `README.md` file for your project. It provides a detailed explanation of the project, its architecture, dependencies, and implementation steps.
+```
+---
 
 ## Overview
 
@@ -62,13 +69,13 @@ The project follows the **SOLID principles** to ensure modularity, scalability, 
 
 ### Key Components
 
-1. **Data Manager (`data_manager.py`)**  
+1. **Data Fetcher (`data_fetcher.py`)**  
    Handles fetching stock data using the `yfinance` API and performing data preprocessing.
 
 2. **Database Manager (`database_manager.py`)**  
    Manages data persistence using SQLite, including schema creation, data insertion, and querying.
 
-3. **Index Manager (`index_manager.py`)**  
+3. **Index Calculator (`index_calculator.py`)**  
    Constructs the equal-weighted index, rebalances the composition daily, and calculates performance.
 
 4. **Dashboard (`dashboard.py`)**  
@@ -113,14 +120,15 @@ We use the `yfinance` library to fetch stock market data. It provides:
 ## File Structure
 
 ```plaintext
-├── data_manager.py         # Fetches and preprocesses stock data
+├── data_fetcher.py         # Fetches and preprocesses stock data
 ├── database_manager.py     # Handles database operations
-├── index_manager.py        # Constructs and rebalances the index
+├── index_calculator.py        # Constructs and rebalances the index
 ├── dashboard.py            # Visualization of index performance and composition changes
 ├── data_exporter.py        # Exports data to Excel and PDF
 ├── main.py                 # Main script to run the project
 ├── requirements.txt        # List of dependencies
 └── README.md               # Project documentation
+└── .env               		# Setting the environment variable
 ```
 
 ---
@@ -270,6 +278,27 @@ sqlite3 stocks.db
 
 ```sql
 .schema stocks
+```
+
+### Step 3c i -- DANGER - To flush the database for creating new entry
+```bash
+    sqlite3 stocks.db
+```
+### Step 3c ii -- DANGER - To flush the tables
+```sql
+    DELETE FROM your_table_name;
+    
+```
+
+### Step 3c iii -- DANGER - To flush the db
+```sql
+    this.deleteDatabase("databasename.db");
+```
+
+### Step 3d: Exit the sqlite3
+
+```sql
+.exit
 ```
 
 ### Step 4: Run the Script

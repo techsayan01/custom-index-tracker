@@ -26,12 +26,11 @@ if __name__ == "__main__":
 
     # Visualization
     dashboard = Dashboard(db_manager)
-    dashboard.plot_index_performance()
-    dashboard.plot_composition_changes()
+    dashboard.launch_dashboard()
 
-    # Export
-    exporter = DataExporter(db_manager)
-    exporter.export_to_excel("index_data.xlsx")
-    exporter.export_to_pdf("index_data.pdf")
+    # # Export
+    # exporter = DataExporter(db_manager)
+    # exporter.export_to_excel("index_data.xlsx")
+    # exporter.export_to_pdf("index_data.pdf")
 
     db_manager.close_connection()
