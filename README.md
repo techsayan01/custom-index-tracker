@@ -330,8 +330,6 @@ exporter.export_to_pdf('index_visualization.pdf')
 
 ## Author
 
-Created by **[Your Name]** as part of a stock index tracking project. Contributions and feedback are welcome!
+Created by **[Sayan Biswas]** as part of a stock index tracking project. Contributions and feedback are welcome!
 
 ---
-
-This README should serve as a comprehensive guide for your project, making it easy for others to understand, use, and extend. Let me know if you'd like to refine it further!
