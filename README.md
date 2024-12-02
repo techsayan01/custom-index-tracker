@@ -125,6 +125,85 @@ We use the `yfinance` library to fetch stock market data. It provides:
 
 ---
 
+The database for this project has a simple, normalized structure. It consists of three key tables to manage stock data, market capitalization, and the index's performance. Here's the structure:
+
+---
+
+### **1. `stock_prices` Table**
+Stores daily closing prices for all stocks.
+
+| **Column Name** | **Data Type** | **Description**                                |
+|------------------|---------------|------------------------------------------------|
+| `Date`           | DATE          | The trading date.                             |
+| `Ticker`         | TEXT          | The stock's ticker symbol (e.g., AAPL).       |
+| `Close`          | FLOAT         | The closing price of the stock on that date.  |
+
+**Primary Key**: `(Date, Ticker)`
+
+---
+
+### **2. `market_caps` Table**
+Holds the market capitalization for stocks.
+
+| **Column Name** | **Data Type** | **Description**                             |
+|------------------|---------------|---------------------------------------------|
+| `Ticker`         | TEXT          | The stock's ticker symbol.                 |
+| `MarketCap`      | FLOAT         | The stock's market capitalization (USD).   |
+
+**Primary Key**: `Ticker`
+
+---
+
+### **3. `index_performance` Table**
+Tracks the daily performance of the custom index.
+
+| **Column Name** | **Data Type** | **Description**                                    |
+|------------------|---------------|---------------------------------------------------|
+| `Date`           | DATE          | The trading date.                                 |
+| `IndexValue`     | FLOAT         | The equal-weighted index value on that date.      |
+
+**Primary Key**: `Date`
+
+---
+
+### **Relationships Between Tables**
+1. **`market_caps` ↔ `stock_prices`**:  
+   The `Ticker` column in both tables links market capitalization data with stock prices.
+
+2. **Index Composition and Performance**:  
+   The `index_performance` table is computed based on `stock_prices` and the top 100 stocks from `market_caps`.
+
+---
+
+### **Schema Diagram**
+```
+stock_prices
+----------------
+| Date         |
+| Ticker       | ----+
+| Close        |     |
+----------------      |
+                     |
+market_caps          |
+----------------      |
+| Ticker       | <---+
+| MarketCap    |
+----------------
+
+index_performance
+----------------
+| Date         |
+| IndexValue   |
+----------------
+```
+
+---
+
+### **Key Points**
+- The database uses SQLite for simplicity, but the structure is compatible with other SQL engines (e.g., PostgreSQL, MySQL).
+- All tables are normalized to avoid redundancy and improve query efficiency.
+- Data access and transformations rely on SQL queries for clarity and maintainability.
+
 ## Implementation Steps
 
 ### 1. Data Fetching and Preprocessing
@@ -202,9 +281,9 @@ data_manager.fetch_and_store_data(['AAPL', 'MSFT', 'GOOGL', ...])  # List of tic
 
 ### 2. Construct the Index
 ```python
-from index_manager import IndexManager
+from index_calculator import IndexCalculator
 
-index_manager = IndexManager(db_manager)
+index_manager = IndexCalculator(db_manager)
 index_manager.update_index()
 ```
 
