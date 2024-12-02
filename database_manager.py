@@ -1,8 +1,12 @@
 import sqlite3
 from typing import Optional
+import os
+from dotenv import load_dotenv, dotenv_values 
+load_dotenv() 
+
 
 class DatabaseManager:
-    def __init__(self, db_name: str = "stocks.db"):
+    def __init__(self, db_name: str = os.getenv("STOCK_DB")):
         self.db_name = db_name
         self.connection = sqlite3.connect(self.db_name)
         self.create_tables()

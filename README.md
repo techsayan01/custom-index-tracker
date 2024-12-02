@@ -253,7 +253,26 @@ cd custom-index-tracker
 pip install -r requirements.txt
 ```
 
-### Step 3: Run the Script
+### Step 3: Create the Database with sqlite3
+
+
+```bash
+sqlite3 stocks.db
+```
+
+### Step 3a: List the tables
+
+```sql
+.tables
+```
+
+### Step 3b: Check the schema
+
+```sql
+.schema stocks
+```
+
+### Step 4: Run the Script
 
 ```bash
 python main.py
@@ -262,50 +281,10 @@ python main.py
 ### Step 4: Explore Outputs
 
 - View the interactive dashboard with visualizations.
-- Check exported Excel and PDF files in the `output` directory.
+- Check exported Excel and PDF files in the `root-project` directory.
 
 ---
 
-## Example Usage
-
-### 1. Fetch Data and Update the Database
-```python
-from data_manager import DataManager
-from database_manager import DatabaseManager
-
-db_manager = DatabaseManager('index_data.db')
-data_manager = DataManager(db_manager)
-
-data_manager.fetch_and_store_data(['AAPL', 'MSFT', 'GOOGL', ...])  # List of tickers
-```
-
-### 2. Construct the Index
-```python
-from index_calculator import IndexCalculator
-
-index_manager = IndexCalculator(db_manager)
-index_manager.update_index()
-```
-
-### 3. Visualize Performance
-```python
-from dashboard import Dashboard
-
-dashboard = Dashboard(db_manager)
-dashboard.plot_index_performance()
-dashboard.plot_composition_changes()
-```
-
-### 4. Export Data
-```python
-from data_exporter import DataExporter
-
-exporter = DataExporter(db_manager)
-exporter.export_to_excel('index_performance.xlsx')
-exporter.export_to_pdf('index_visualization.pdf')
-```
-
----
 
 ## Scalability and Maintenance
 
@@ -330,6 +309,6 @@ exporter.export_to_pdf('index_visualization.pdf')
 
 ## Author
 
-Created by **[Sayan Biswas]** as part of a stock index tracking project. Contributions and feedback are welcome!
+Created by **[Sayan Biswas]** as part of a stock index tracking project - Altemetrix. Contributions and feedback are welcome!
 
 ---

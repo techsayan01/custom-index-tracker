@@ -3,9 +3,14 @@ from data_fetcher import StockDataFetcher
 from index_calculator import IndexCalculator
 from dashboard import Dashboard
 from data_exporter import DataExporter
+import os
+from dotenv import load_dotenv, dotenv_values 
+load_dotenv() 
+
 
 if __name__ == "__main__":
-    db_manager = DatabaseManager("stocks.db")
+    stock_db = os.getenv("STOCK_DB")
+    db_manager = DatabaseManager(stock_db)
     tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']  # Example tickers
     start_date = "2024-10-01"
     end_date = "2024-10-31"
