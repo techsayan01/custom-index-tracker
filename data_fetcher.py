@@ -1,27 +1,26 @@
 import yfinance as yf
-import pandas as pd
-from abc import ABC, abstractmethod
+from database_manager import DatabaseManager
 
-class DataFetcher(ABC):
-    """Abstract base class for fetching stock data."""
-    @abstractmethod
-    def fetch_data(self, symbols: list[str], start_date: str, end_date: str) -> pd.DataFrame:
-        pass
+class StockDataFetcher:
+    def __init__(self, db_manager: DatabaseManager):
+        self.db_manager = db_manager
 
-class YahooFinanceFetcher(DataFetcher):
-    """Concrete implementation using yfinance."""
-    def fetch_data(self, symbols: list[str], start_date: str, end_date: str) -> pd.DataFrame:
-        # Fetch data for all symbols using yfinance
-        data = yf.download(symbols, start=start_date, end=end_date, group_by="ticker", auto_adjust=True)
-        formatted_data = []
+    def fetch_stock_data(self, tickers, start_date, end_date):
+        data = yf.download(tickers, start=start_date, end=end_date)['Close']
+        stock_data = data.reset_index().melt(id_vars='Date', var_name='Ticker', value_name='Close')
+        for _, row in stock_data.iterrows():
+            self.db_manager.execute_query(
+                "INSERT OR REPLACE INTO stock_prices (Date, Ticker, Close) VALUES (?, ?, ?)",
+                (row['Date'].strftime('%Y-%m-%d'), row['Ticker'], row['Close'])
+            )
 
-        # print(formatted_data)
-
-        # Restructure data into a flat DataFrame
-        for symbol in symbols:
-            if symbol in data.columns.levels[0]:  # Check if the symbol has data
-                symbol_data = data[symbol].reset_index()
-                symbol_data["Symbol"] = symbol
-                formatted_data.append(symbol_data)
-
-        return pd.concat(formatted_data, ignore_index=True) if formatted_data else pd.DataFrame()
+    def fetch_market_cap(self, tickers):
+        market_caps = []
+        for ticker in tickers:
+            stock = yf.Ticker(ticker)
+            market_caps.append((ticker, stock.info.get('marketCap', 0)))
+        for ticker, market_cap in market_caps:
+            self.db_manager.execute_query(
+                "INSERT OR REPLACE INTO market_caps (Ticker, MarketCap) VALUES (?, ?)",
+                (ticker, market_cap)
+            )

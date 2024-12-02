@@ -1,15 +1,32 @@
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+from database_manager import DatabaseManager
 import pandas as pd
 
-class Exporter:
-    """Exports data to Excel and PDF formats."""
-    def to_excel(self, data: pd.DataFrame, filename: str):
+class DataExporter:
+    def __init__(self, db_manager: DatabaseManager):
+        self.db_manager = db_manager
+
+    def export_to_excel(self, filename: str):
+        query = "SELECT * FROM index_performance"
+        rows = self.db_manager.fetch_query(query)
+        data = pd.DataFrame(rows, columns=['Date', 'IndexValue'])
         data.to_excel(filename, index=False)
 
-    def to_pdf(self, data: pd.DataFrame, filename: str):
-        from matplotlib.backends.backend_pdf import PdfPages
-        with PdfPages(filename) as pdf:
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.axis('tight')
-            ax.axis('off')
-            ax.table(cellText=data.values, colLabels=data.columns, loc='center')
-            pdf.savefig(fig)
+    def export_to_pdf(self, filename: str):
+        pdf = PdfPages(filename)
+
+        query = "SELECT * FROM index_performance"
+        rows = self.db_manager.fetch_query(query)
+        data = pd.DataFrame(rows, columns=['Date', 'IndexValue'])
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(data['Date'], data['IndexValue'], marker='o', linestyle='-', color='b')
+        plt.title("Index Performance")
+        plt.xlabel("Date")
+        plt.ylabel("Index Value")
+        plt.grid()
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        pdf.savefig()
+        pdf.close()

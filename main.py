@@ -1,33 +1,32 @@
-from data_fetcher import YahooFinanceFetcher, DataFetcher
-from data_exporter import Exporter
-from index_calculator import IndexCalculator
 from database_manager import DatabaseManager
-from data_exporter import Exporter
+from data_fetcher import StockDataFetcher
+from index_calculator import IndexCalculator
 from dashboard import Dashboard
-
+from data_exporter import DataExporter
 
 if __name__ == "__main__":
-    # Initialize components
-    db_manager = DatabaseManager()
-    data_fetcher = YahooFinanceFetcher()
-    index_calculator = IndexCalculator(db_manager)
-    exporter = Exporter()
-    dashboard = Dashboard(db_manager, index_calculator)
+    db_manager = DatabaseManager("stocks.db")
+    tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']  # Example tickers
+    start_date = "2024-10-01"
+    end_date = "2024-10-31"
 
-    # Fetch data example
-    symbols = ["AAPL", "MSFT", "GOOG"]  # Replace with the top stock symbols
-    stock_data = data_fetcher.fetch_data(symbols, "2023-11-01", "2023-11-30")
-    print(stock_data)
+    # Data fetching
+    fetcher = StockDataFetcher(db_manager)
+    fetcher.fetch_stock_data(tickers, start_date, end_date)
+    fetcher.fetch_market_cap(tickers)
 
-    if not stock_data.empty:
-        db_manager.insert_data(stock_data)
-        print("Stock data successfully fetched and stored in the database.")
+    # Index calculation
+    constructor = IndexCalculator(db_manager)
+    constructor.calculate_index()
 
-        # Export to Excel
-        exporter.to_excel(stock_data, "stock_data.xlsx")
-        print("Stock data exported to stock_data.xlsx.")
+    # Visualization
+    dashboard = Dashboard(db_manager)
+    dashboard.plot_index_performance()
+    dashboard.plot_composition_changes()
 
-        # Launch dashboard
-        dashboard.launch_dashboard(start_date="2023-11-01", end_date="2023-11-30", selected_date="2023-11-15")
-    else:
-        print("Failed to fetch stock data. Please check the symbols and date range.")
+    # Export
+    exporter = DataExporter(db_manager)
+    exporter.export_to_excel("index_data.xlsx")
+    exporter.export_to_pdf("index_data.pdf")
+
+    db_manager.close_connection()

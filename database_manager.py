@@ -1,35 +1,55 @@
 import sqlite3
-import pandas as pd
+from typing import Optional
 
 class DatabaseManager:
-    """Manages SQLite database for storing stock data."""
-    def __init__(self, db_name=":memory:"):
-        self.conn = sqlite3.connect(db_name)
-        # self.create_tables()
-    
+    def __init__(self, db_name: str = "stocks.db"):
+        self.db_name = db_name
+        self.connection = sqlite3.connect(self.db_name)
+        self.create_tables()
+
     def create_tables(self):
-        with self.conn:
-            self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS stock_data (
-                symbol TEXT,
-                date TEXT,
-                open REAL,
-                high REAL,
-                low REAL,
-                close REAL,
-                volume INTEGER,
-                market_cap REAL,
-                PRIMARY KEY (symbol, date)
+        queries = [
+            """
+            CREATE TABLE IF NOT EXISTS stock_prices (
+                Date TEXT NOT NULL,
+                Ticker TEXT NOT NULL,
+                Close REAL NOT NULL,
+                PRIMARY KEY (Date, Ticker)
             )
-            """)
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS market_caps (
+                Ticker TEXT NOT NULL PRIMARY KEY,
+                MarketCap REAL NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS index_performance (
+                Date TEXT NOT NULL PRIMARY KEY,
+                IndexValue REAL NOT NULL
+            )
+            """
+        ]
+        cursor = self.connection.cursor()
+        for query in queries:
+            cursor.execute(query)
+        self.connection.commit()
 
-    def insert_data(self, data: pd.DataFrame):
-        print("inserting stock data from in sqlite3")
-        with self.conn:
-            data.to_sql("stock_data", self.conn, if_exists="append", index=False)
+    def execute_query(self, query: str, params: Optional[tuple] = None):
+        cursor = self.connection.cursor()
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        self.connection.commit()
 
-    def query(self, sql: str, params=None):
-        print("query the sqlite3 database")
-        with self.conn:
-            cursor = self.conn.execute(sql, params or [])
-            return cursor.fetchall()
+    def fetch_query(self, query: str, params: Optional[tuple] = None):
+        cursor = self.connection.cursor()
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        return cursor.fetchall()
+
+    def close_connection(self):
+        self.connection.close()
