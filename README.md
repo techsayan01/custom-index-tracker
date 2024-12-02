@@ -215,7 +215,7 @@ index_performance
 ## Implementation Steps
 
 ### 1. Data Fetching and Preprocessing
-- **File**: `data_manager.py`  
+- **File**: `data_fetcher.py`  
 - Use `yfinance` to fetch daily stock price data (open, high, low, close) and shares outstanding.
 - Calculate the market capitalization for each stock (`close price * shares outstanding`).
 
@@ -227,7 +227,7 @@ index_performance
   - `index_performance`: Tracks daily index performance and composition.
 
 ### 3. Index Construction
-- **File**: `index_manager.py`  
+- **File**: `index_calculator.py`  
 - Identify the top 100 stocks by market cap for each day.
 - Rebalance the index if the top 100 stocks change.
 - Calculate the equal-weighted index value.
@@ -292,7 +292,11 @@ sqlite3 stocks.db
 
 ### Step 3c iii -- DANGER - To flush the db
 ```sql
-    this.deleteDatabase("databasename.db");
+    .database;
+```
+Extract the location
+```bash
+rm -rf "<database path>"
 ```
 
 ### Step 3d: Exit the sqlite3
