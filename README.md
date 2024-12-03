@@ -87,14 +87,15 @@ This project provides a streamlined way to create and track a custom equal-weigh
 
 ### **1. Clone the Repository**
 ```bash
-git clone https://github.com/your-repo/custom-index-tracker.git
+git clone https://github.com/techsayan01/custom-index-tracker.git
 cd custom-index-tracker
 ```
 
 ### **2. Create and Activate a Virtual Environment**
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  
+# On Windows: venv\Scripts\activate
 ```
 
 ### **3. Install Dependencies**
