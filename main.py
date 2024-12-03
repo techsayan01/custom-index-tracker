@@ -1,36 +1,44 @@
-from database_manager import DatabaseManager
-from data_fetcher import StockDataFetcher
-from index_calculator import IndexCalculator
-from dashboard import Dashboard
-from data_exporter import DataExporter
-import os
-from dotenv import load_dotenv, dotenv_values 
-load_dotenv() 
+from src.market_data_fetcher import MarketDataFetcher
+from database.database_manager import DatabaseManager
+from database.query_manager import QueryManager
+from src.index_constructor import IndexConstructor
+from src.data_exporter import DataExporter
+from src.dashboard import Dashboard
+import pandas as pd
+
+
+def main():
+    # Step 1: Configuration
+    tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+
+    # Step 2: Initialize Managers
+    db_manager = DatabaseManager()
+    query_manager = QueryManager(db_manager)
+
+    # Step 3: Fetch and Persist Data
+    fetcher = MarketDataFetcher(tickers, period="1mo")
+    prices, market_caps = fetcher.fetch_data()
+
+    formatted_data = [
+        (date, ticker, prices.at[date, ticker], market_caps.at[date, ticker])
+        for date in prices.index for ticker in prices.columns
+    ]
+    query_manager.insert_stock_data(formatted_data)
+
+    # Step 4: Construct Index
+    dates = prices.index.strftime("%Y-%m-%d").tolist()
+    constructor = IndexConstructor(query_manager)
+    index_data, composition_changes = constructor.build_index(dates)
+
+    # Step 5: Export Data
+    exporter = DataExporter()
+    exporter.export_to_excel(index_data, "index_performance.xlsx")
+    exporter.export_to_pdf(index_data, "index_performance.pdf")
+
+    # Step 6: Create Dashboard
+    dashboard = Dashboard(index_data, composition_changes, query_manager)
+    dashboard.run()
 
 
 if __name__ == "__main__":
-    stock_db = os.getenv("STOCK_DB")
-    db_manager = DatabaseManager(stock_db)
-    tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']  # Example tickers
-    start_date = "2024-10-01"
-    end_date = "2024-10-31"
-
-    # Data fetching
-    fetcher = StockDataFetcher(db_manager)
-    fetcher.fetch_stock_data(tickers, start_date, end_date)
-    fetcher.fetch_market_cap(tickers)
-
-    # Index calculation
-    constructor = IndexCalculator(db_manager)
-    constructor.calculate_index()
-
-    # Visualization
-    dashboard = Dashboard(db_manager)
-    dashboard.launch_dashboard()
-
-    # # Export
-    # exporter = DataExporter(db_manager)
-    # exporter.export_to_excel("index_data.xlsx")
-    # exporter.export_to_pdf("index_data.pdf")
-
-    db_manager.close_connection()
+    main()
