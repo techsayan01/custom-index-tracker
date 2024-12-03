@@ -26,8 +26,9 @@ class DatabaseManager(metaclass=SingletonMeta):
     Manages the SQLite database with a singleton connection.
     """
     def __init__(self):
+        self.db_path = Config.DB_PATH
         self.conn = sqlite3.connect(Config.DB_PATH)
-        self._create_tables()
+        self._ensure_tables()
 
     def _create_tables(self):
         """
@@ -45,11 +46,28 @@ class DatabaseManager(metaclass=SingletonMeta):
         """)
         self.conn.commit()
 
+    def _ensure_tables(self):
+        """
+        Ensures all required tables are created.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS stock_data (
+                    date TEXT,
+                    ticker TEXT,
+                    price REAL,
+                    market_cap REAL,
+                    PRIMARY KEY (date, ticker)
+                )
+            """)
+            conn.commit()
+
     def get_connection(self):
         """
-        Returns the database connection.
+        Returns a new SQLite connection with thread-safety enabled.
         """
-        return self.conn
+        return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def query(self, query, params=()):
         """

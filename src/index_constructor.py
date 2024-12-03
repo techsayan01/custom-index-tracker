@@ -4,41 +4,36 @@ class IndexConstructor:
     """
     Constructs an equal-weighted custom index.
     """
-    def __init__(self, db_manager):
-        self.db_manager = db_manager
+    def __init__(self, query_manager):
+        self.query_manager = query_manager
 
-    def get_top_100(self, date):
-        """
-        Retrieves the top 100 stocks by market cap for a given date.
-        """
-        query = """
-            SELECT ticker, price, market_cap
-            FROM stock_data
-            WHERE date = ?
-            ORDER BY market_cap DESC
-            LIMIT 100
-        """
-        return self.db_manager.query(query, (date,))
 
     def build_index(self, dates):
         """
-        Builds an equal-weighted index over the given dates.
+        Constructs an equal-weighted index for the given dates.
+
+        Args:
+            dates: List of trading dates in chronological order.
+
+        Returns:
+            A pandas DataFrame containing the index value for each date with columns ['date', 'index_value'].
         """
-        index_values = []
-        previous_top_100 = set()
-        composition_changes = []
+        index_data = []
 
         for date in dates:
-            top_100 = self.get_top_100(date)
-            weight = 1 / 100
-            index_value = sum(row[1] * weight for row in top_100)
-            index_values.append({"date": date, "index_value": index_value})
+            # Fetch the top 100 stocks for the current date
+            top_100_stocks = self.query_manager.get_top_100_stocks(date)
 
-            current_top_100 = {row[0] for row in top_100}
-            added = current_top_100 - previous_top_100
-            removed = previous_top_100 - current_top_100
-            composition_changes.append({"date": date, "added": list(added), "removed": list(removed)})
+            # Fetch prices for the top 100 stocks
+            stock_prices = self.query_manager.get_stock_prices(date, top_100_stocks)
 
-            previous_top_100 = current_top_100
+            # Calculate the equal-weighted index value
+            weight = 1 / len(top_100_stocks) if top_100_stocks else 0
+            index_value = sum(price * weight for price in stock_prices.values())
 
-        return pd.DataFrame(index_values), composition_changes
+            # Append the index value for the current date
+            index_data.append({"date": date, "index_value": index_value})
+
+        # print(top_100_stocks)
+        # Convert to a pandas DataFrame
+        return pd.DataFrame(index_data)

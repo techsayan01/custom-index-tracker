@@ -86,22 +86,17 @@ class Dashboard:
             Input("date-dropdown", "value")
         )
         def update_composition_chart(selected_date):
-            """
-            Updates the composition chart to show the distribution of stocks in the index on the selected date.
-            Fetches data dynamically from the SQLite3 database.
-            """
-            # Query the database for top 100 stocks by market cap for the selected date
+            # Fetch data from the database
             result = self.query_manager.get_top_100_stocks(selected_date)
+            tickers = [row[0] for row in result]
+            market_caps = [float(row[1]) for row in result if isinstance(row[1], (int, float, str)) and row[1] != ""]
 
-            # Prepare data for the chart
-            tickers = [row[0] for row in result]  # Stock tickers
-            market_caps = [row[1] for row in result]  # Market caps
-            total_market_cap = sum(market_caps)  # Total market cap of top 100 stocks
-
-            # Calculate weights (as percentages of total market cap)
+            
+            # Calculate weights
+            total_market_cap = sum(market_caps)
             weights = [cap / total_market_cap for cap in market_caps]
 
-            # Create a bar chart
+            # Use correct formatting for chart labels
             return {
                 "data": [
                     go.Bar(
@@ -113,12 +108,13 @@ class Dashboard:
                     )
                 ],
                 "layout": {
-                    "title": f"Index Composition on {selected_date}",
+                    "title": f"Index Composition on {str(selected_date)}",
                     "xaxis": {"title": "Stock Tickers"},
                     "yaxis": {"title": "Weight in Index"},
                     "barmode": "group",
                 }
             }
+
 
     def run(self):
         """
